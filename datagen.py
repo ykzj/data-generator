@@ -7,12 +7,17 @@ import multiprocessing
 from multiprocessing import Process
 import uuid
 import math
+import os
+
+data_dir = '/data'
 
 #total records number
 records = 100000000
 
 #leave one core for system operations
 ncpu = multiprocessing.cpu_count()-1
+
+#records per process
 rpp = math.floor(records / ncpu)
 
 #load schema from data.avsc
@@ -22,7 +27,7 @@ schema = avro.schema.parse(open('data.avsc', 'rb').read())
 fake = Faker('zh_CN')
 
 def gen(pid, lines):
-	data_file = '/data/data-100M-part' + str(pid) + '.avro'
+	data_file = os.path.join(data_dir, 'data-100M-part{}.avro'.format(pid))
 	writer = DataFileWriter(open(data_file, 'wb'), DatumWriter(), schema)
 	for i in range(lines):
 		data = {
@@ -39,6 +44,7 @@ def gen(pid, lines):
 				'ssn':			fake.ssn()
 			}
 		writer.append(data)
+		del data
 		#print progress every 10000 records generated
 		if i%10000 == 0:
 			print('[{}] : {} lines generated.'.format(pid, i))
