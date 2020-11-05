@@ -27,7 +27,7 @@ schema = avro.schema.parse(open('data.avsc', 'rb').read())
 fake = Faker('zh_CN')
 
 def gen(pid, lines):
-	data_file = os.path.join(data_dir, 'data-100M-part{}.avro'.format(pid))
+	data_file = os.path.join(data_dir, 'data-part{}.avro'.format(pid))
 	writer = DataFileWriter(open(data_file, 'wb'), DatumWriter(), schema)
 	for i in range(lines):
 		data = {
@@ -57,8 +57,11 @@ for i in range(ncpu):
 	#last partition
 	if rpp * (i+2) > records:
 		rpp = records - i*rpp
-	plist.append(Process(target=gen, args=(i+1,rpp)))
-	plist[i].start()
+	p = Process(target=gen, args=(i+1,rpp))
+	plist.append(p)
+	#bind to specific core
+	os.system('taskset -p -c {} {}'.format(i+1, p.pid))
+	p.start()
 
 for p in plist:
 	p.join()
