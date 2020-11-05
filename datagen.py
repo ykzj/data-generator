@@ -60,8 +60,9 @@ for i in range(ncpu):
 	p = Process(target=gen, args=(i+1,rpp))
 	plist.append(p)
 	#bind to specific core
-	os.system('taskset -p -c {} {}'.format(i+1, p.pid))
 	p.start()
+	os.system('taskset -p -c {} {}'.format(i+1, p.pid))
+	
 
 for p in plist:
 	p.join()
